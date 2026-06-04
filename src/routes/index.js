@@ -1,0 +1,31 @@
+import { Router } from "express";
+import { auditRouter } from "./audit.routes.js";
+import { authRouter } from "./auth.routes.js";
+import { documentRouter } from "./document.routes.js";
+import { droneRouter } from "./drone.routes.js";
+import { geofenceRouter } from "./geofence.routes.js";
+import { healthRouter } from "./health.routes.js";
+import { incidentRouter } from "./incident.routes.js";
+import { maintenanceRouter } from "./maintenance.routes.js";
+import { missionRouter } from "./mission.routes.js";
+import { reportRouter } from "./report.routes.js";
+import { telemetryRouter } from "./telemetry.routes.js";
+import { userRouter } from "./user.routes.js";
+import * as telemetryController from "../controllers/telemetry.controller.js";
+import { requireAuth, requirePermission } from "../middleware/auth.js";
+
+export const apiRouter = Router();
+
+apiRouter.use("/health", healthRouter);
+apiRouter.use("/auth", authRouter);
+apiRouter.use("/drones", droneRouter);
+apiRouter.use("/missions", missionRouter);
+apiRouter.get("/missions/:id/replay", requireAuth, requirePermission("telemetry:read"), telemetryController.replay);
+apiRouter.use("/incidents", incidentRouter);
+apiRouter.use("/telemetry", telemetryRouter);
+apiRouter.use("/maintenance", maintenanceRouter);
+apiRouter.use("/documents", documentRouter);
+apiRouter.use("/reports", reportRouter);
+apiRouter.use("/geofences", geofenceRouter);
+apiRouter.use("/users", userRouter);
+apiRouter.use("/audit", auditRouter);

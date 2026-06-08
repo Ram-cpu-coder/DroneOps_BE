@@ -17,7 +17,10 @@ export const droneCreateSchema = z.object({
     status: z.enum(["AVAILABLE", "IN_MISSION", "MAINTENANCE", "GROUNDED", "DISCONNECTED", "AWAITING_APPROVAL"]).default("AVAILABLE"),
     flightHours: z.number().nonnegative().default(0),
     purchaseDate: z.string().datetime().optional(),
-    certificationStatus: z.enum(["CERTIFIED", "AWAITING_APPROVAL", "AWAITING_RENEWAL", "EXPIRED", "GROUNDED_PENDING_INSPECTION"]).default("AWAITING_APPROVAL")
+    certificationStatus: z.enum(["CERTIFIED", "AWAITING_APPROVAL", "AWAITING_RENEWAL", "EXPIRED", "GROUNDED_PENDING_INSPECTION"]).default("AWAITING_APPROVAL"),
+    telemetryProvider: z.enum(["NONE", "GENERIC_REST", "DJI", "AUTEL", "MAVLINK"]).default("NONE"),
+    externalDeviceId: z.string().optional(),
+    connectorConfig: z.record(z.unknown()).optional()
   }),
   params: z.object({}).optional(),
   query: z.object({}).optional()

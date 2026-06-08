@@ -4,7 +4,11 @@ import { ok } from "../utils/apiResponse.js";
 
 export const list = asyncHandler(async (req, res) => {
   const users = await prisma.user.findMany({
-    where: {},
+    // Keep user directories tenant-scoped so one organisation never sees another
+    // organisation's accounts in management screens or assignment dropdowns.
+    where: {
+      organisationId: req.user.organisationId
+    },
     select: {
       id: true,
       organisation: {

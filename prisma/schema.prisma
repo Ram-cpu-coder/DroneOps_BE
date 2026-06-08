@@ -34,6 +34,22 @@ enum CertificationStatus {
   GROUNDED_PENDING_INSPECTION
 }
 
+enum TelemetryProvider {
+  NONE
+  GENERIC_REST
+  DJI
+  AUTEL
+  MAVLINK
+}
+
+enum ConnectorStatus {
+  NOT_CONFIGURED
+  CONFIGURED
+  ONLINE
+  DEGRADED
+  OFFLINE
+}
+
 enum MissionStatus {
   PLANNED
   APPROVED
@@ -171,6 +187,11 @@ model Drone {
   flightHours         Float               @default(0)
   purchaseDate        DateTime?
   certificationStatus CertificationStatus @default(AWAITING_APPROVAL)
+  telemetryProvider  TelemetryProvider    @default(NONE)
+  externalDeviceId   String?
+  connectorConfig    Json?
+  connectorStatus    ConnectorStatus      @default(NOT_CONFIGURED)
+  lastTelemetryAt    DateTime?
   nextMaintenanceDate DateTime?
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
@@ -185,6 +206,7 @@ model Drone {
 
   @@unique([organisationId, droneCode])
   @@index([organisationId, status])
+  @@index([organisationId, telemetryProvider, connectorStatus])
 }
 
 model Mission {

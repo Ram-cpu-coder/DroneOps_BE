@@ -7,6 +7,13 @@ const escapeHtml = (value = "") => {
     .replaceAll("'", "&#039;");
 };
 
+const eyeIcon = `
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path>
+    <circle cx="12" cy="12" r="3"></circle>
+  </svg>
+`;
+
 const baseStyles = `
   :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
   * { box-sizing: border-box; }
@@ -25,6 +32,11 @@ const baseStyles = `
   label { display: grid; gap: 8px; color: #c9d5e8; font-size: 13px; font-weight: 800; }
   input { min-height: 52px; padding: 0 15px; color: #f8fbff; background: rgba(255,255,255,.05); border: 1px solid rgba(142,166,207,.24); border-radius: 10px; font: inherit; outline: none; }
   input:focus { border-color: #5a95ff; box-shadow: 0 0 0 4px rgba(90,149,255,.16); }
+  .password-field { position: relative; display: block; }
+  .password-field input { width: 100%; padding-right: 54px; }
+  .toggle-password { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; justify-content: center; width: 36px; min-height: 36px; padding: 0; color: #a9bad2; background: transparent; border: 0; border-radius: 9px; box-shadow: none; }
+  .toggle-password:hover { color: #ffffff; background: rgba(255,255,255,.08); }
+  .toggle-password svg { width: 18px; height: 18px; pointer-events: none; }
   button, a { display: inline-flex; align-items: center; justify-content: center; min-height: 54px; width: 100%; padding: 0 22px; color: #fff; background: linear-gradient(135deg, #5a95ff, #2672ea); border: 0; border-radius: 12px; text-decoration: none; font-size: 16px; font-weight: 850; cursor: pointer; box-shadow: 0 18px 36px rgba(38,114,234,.28); }
   .status { display: inline-flex; justify-content: center; margin-bottom: 18px; padding: 9px 14px; border-radius: 999px; color: #96f2d7; background: rgba(21,185,132,.14); border: 1px solid rgba(21,185,132,.34); font-weight: 800; }
   .error { color: #ffd1a6; background: rgba(255,160,67,.14); border-color: rgba(255,160,67,.34); }
@@ -45,11 +57,31 @@ export const renderPasswordResetFormPage = ({ token }) => {
       <h2>Reset password</h2>
       <p>Create a new password for your DroneOps account. Use at least 8 characters.</p>
       <form method="post" action="/api/v1/auth/reset-password/${safeToken}">
-        <label>New password<input type="password" name="password" minlength="8" required autocomplete="new-password" /></label>
-        <label>Confirm password<input type="password" name="confirmPassword" minlength="8" required autocomplete="new-password" /></label>
+        <label>New password
+          <span class="password-field">
+            <input id="password" type="password" name="password" minlength="8" required autocomplete="new-password" />
+            <button class="toggle-password" type="button" data-target="password" aria-label="Show password">${eyeIcon}</button>
+          </span>
+        </label>
+        <label>Confirm password
+          <span class="password-field">
+            <input id="confirmPassword" type="password" name="confirmPassword" minlength="8" required autocomplete="new-password" />
+            <button class="toggle-password" type="button" data-target="confirmPassword" aria-label="Show confirm password">${eyeIcon}</button>
+          </span>
+        </label>
         <button type="submit">Update password</button>
       </form>
     </main>
+    <script>
+      document.querySelectorAll(".toggle-password").forEach((button) => {
+        button.addEventListener("click", () => {
+          const input = document.getElementById(button.dataset.target);
+          const isHidden = input.type === "password";
+          input.type = isHidden ? "text" : "password";
+          button.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+        });
+      });
+    </script>
   </body>
 </html>`;
 };

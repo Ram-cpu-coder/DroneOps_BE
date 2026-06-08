@@ -4,6 +4,7 @@ import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
 import { AppError } from "../utils/AppError.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "./email.service.js";
+import { storeUploadedFile } from "./fileStorage.service.js";
 import { comparePassword, hashPassword } from "../utils/passwords.js";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/tokens.js";
 
@@ -80,6 +81,7 @@ export const signup = async (payload) => {
         email: payload.email,
         passwordHash,
         role: payload.role,
+        profileImageUrl: payload.profileImageUrl,
         verificationToken
       },
       select: publicUserSelect
@@ -99,6 +101,20 @@ export const signup = async (payload) => {
     emailSent: emailStatus.sent,
     emailError: emailStatus.error,
     devVerificationToken: !emailStatus.sent && process.env.NODE_ENV !== "production" ? verificationToken : undefined
+  };
+};
+
+export const uploadProfileImage = async (file) => {
+  if (!file) throw new AppError("A profile image is required", 400, "PROFILE_IMAGE_REQUIRED");
+
+  const storedFile = await storeUploadedFile(file, {
+    organisationId: "pending-signups",
+    entityType: "PROFILE_IMAGE"
+  });
+
+  return {
+    profileImageUrl: storedFile.fileUrl,
+    storageProvider: storedFile.storageProvider
   };
 };
 

@@ -7,7 +7,7 @@ import { idParamSchema, missionCreateSchema } from "../validators/core.validator
 export const missionRouter = Router();
 
 missionRouter.use(requireAuth);
-missionRouter.get("/", requirePermission("missions:manage"), missionController.list);
+missionRouter.get("/", requirePermission("missions:read"), missionController.list);
 missionRouter.post("/", requirePermission("missions:manage"), validate(missionCreateSchema), missionController.create);
 missionRouter.put("/:id", requirePermission("missions:manage"), validate(idParamSchema), missionController.update);
 missionRouter.post("/:id/start", requirePermission("missions:manage"), validate(idParamSchema), missionController.start);

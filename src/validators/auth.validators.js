@@ -14,6 +14,7 @@ export const signupSchema = z.object({
     password: passwordSchema,
     organisationName: z.string().min(2),
     industry: z.string().optional(),
+    profileImageUrl: z.string().url().optional(),
     role: z.enum([
       "OPERATIONS_MANAGER",
       "REMOTE_PILOT",

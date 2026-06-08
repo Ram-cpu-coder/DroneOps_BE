@@ -39,5 +39,8 @@ export const env = {
   googleClientId: process.env.GOOGLE_CLIENT_ID,
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
-  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET
+  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
+  connectorWorkerEnabled: process.env.CONNECTOR_WORKER_ENABLED === "true",
+  connectorPollIntervalMs: Number(process.env.CONNECTOR_POLL_INTERVAL_MS ?? 5000),
+  genericTelemetryApiKey: process.env.GENERIC_TELEMETRY_API_KEY
 };

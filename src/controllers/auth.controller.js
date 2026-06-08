@@ -25,6 +25,11 @@ export const completeGoogleProfile = asyncHandler(async (req, res) => {
   return ok(res, result, "Google profile completed");
 });
 
+export const uploadProfileImage = asyncHandler(async (req, res) => {
+  const result = await authService.uploadProfileImage(req.file);
+  return created(res, result, "Profile image uploaded");
+});
+
 export const verifyEmail = asyncHandler(async (req, res, next) => {
   const wantsJson = req.query.format === "json";
 

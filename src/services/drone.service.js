@@ -11,6 +11,8 @@ export const listDrones = (organisationId) => {
 };
 
 export const createDrone = async (organisationId, data) => {
+  const telemetryProvider = resolveTelemetryProvider(data);
+
   return prisma.drone.create({
     data: {
       organisationId,
@@ -23,7 +25,11 @@ export const createDrone = async (organisationId, data) => {
       status: data.status,
       flightHours: data.flightHours,
       purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : undefined,
-      certificationStatus: data.certificationStatus
+      certificationStatus: data.certificationStatus,
+      telemetryProvider,
+      externalDeviceId: data.externalDeviceId,
+      connectorConfig: data.connectorConfig,
+      connectorStatus: telemetryProvider !== "NONE" && data.externalDeviceId ? "CONFIGURED" : "NOT_CONFIGURED"
     }
   });
 };
@@ -66,4 +72,15 @@ export const ensureDroneExists = async (organisationId, id) => {
   const drone = await prisma.drone.findFirst({ where: { id, organisationId } });
   if (!drone) throw new AppError("Drone not found", 404, "DRONE_NOT_FOUND");
   return drone;
+};
+
+const resolveTelemetryProvider = (data) => {
+  if (data.telemetryProvider && data.telemetryProvider !== "NONE") return data.telemetryProvider;
+
+  const manufacturer = data.manufacturer?.toLowerCase() ?? "";
+  if (manufacturer.includes("dji")) return "DJI";
+  if (manufacturer.includes("autel")) return "AUTEL";
+  if (manufacturer.includes("px4") || manufacturer.includes("ardupilot") || manufacturer.includes("mavlink")) return "MAVLINK";
+
+  return "NONE";
 };

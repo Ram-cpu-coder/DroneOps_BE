@@ -2,6 +2,7 @@ import http from "node:http";
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { disconnectPrisma } from "./config/prisma.js";
+import { startConnectorWorker, stopConnectorWorker } from "./services/connector.service.js";
 import { attachSocketServer } from "./sockets/index.js";
 
 const app = createApp();
@@ -11,10 +12,12 @@ attachSocketServer(server);
 
 server.listen(env.port, () => {
   console.log(`DroneOps API running on http://localhost:${env.port}${env.apiPrefix}`);
+  startConnectorWorker();
 });
 
 const shutdown = async (signal) => {
   console.log(`${signal} received. Closing DroneOps API...`);
+  stopConnectorWorker();
   server.close(async () => {
     await disconnectPrisma();
     process.exit(0);

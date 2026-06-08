@@ -60,6 +60,9 @@ export const startMission = async (organisationId, id) => {
   if (!mission.droneId || !mission.pilotId) throw new AppError("Mission requires drone and pilot assignment", 409, "MISSION_ASSIGNMENT_REQUIRED");
   if (!mission.riskAssessment) throw new AppError("Risk assessment required before activation", 409, "RISK_ASSESSMENT_REQUIRED");
   if (!["APPROVED", "PLANNED"].includes(mission.status)) throw new AppError("Mission cannot be started from current status", 409, "INVALID_MISSION_STATUS");
+  if (mission.drone?.telemetryProvider && mission.drone.telemetryProvider !== "NONE" && !mission.drone.externalDeviceId) {
+    throw new AppError("Drone external device ID is required for live telemetry connector", 409, "DRONE_CONNECTOR_ID_REQUIRED");
+  }
 
   return prisma.mission.update({
     where: { id },

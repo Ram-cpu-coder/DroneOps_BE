@@ -74,7 +74,11 @@ export const ingestTelemetry = async (organisationId, payload) => {
 
   await prisma.drone.update({
     where: { id: drone.id },
-    data: { status: payload.status === "IN_FLIGHT" ? "IN_MISSION" : drone.status }
+    data: {
+      status: payload.status === "IN_FLIGHT" ? "IN_MISSION" : drone.status,
+      connectorStatus: "ONLINE",
+      lastTelemetryAt: record.timestamp
+    }
   });
 
   return { telemetry: apiTelemetry, alerts };

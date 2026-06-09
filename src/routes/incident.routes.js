@@ -10,3 +10,4 @@ incidentRouter.use(requireAuth);
 incidentRouter.get("/", requirePermission("incidents:read"), incidentController.list);
 incidentRouter.post("/", requireAnyPermission(["incidents:manage", "incidents:create"]), validate(incidentCreateSchema), incidentController.create);
 incidentRouter.put("/:id", requirePermission("incidents:manage"), validate(idParamSchema), incidentController.update);
+incidentRouter.delete("/:id", requirePermission("incidents:manage"), validate(idParamSchema), incidentController.remove);

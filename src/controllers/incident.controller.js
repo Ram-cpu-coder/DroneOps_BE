@@ -33,3 +33,16 @@ export const update = asyncHandler(async (req, res) => {
   });
   return ok(res, incident, "Incident updated");
 });
+
+export const remove = asyncHandler(async (req, res) => {
+  const incident = await incidentService.deleteIncident(req.user.organisationId, req.params.id);
+  await writeAudit({
+    organisationId: req.user.organisationId,
+    actorId: req.user.id,
+    action: "INCIDENT_DELETED",
+    entityType: "INCIDENT",
+    entityId: incident.id,
+    metadata: { incidentCode: incident.incidentCode }
+  });
+  return ok(res, { id: incident.id }, "Incident deleted");
+});

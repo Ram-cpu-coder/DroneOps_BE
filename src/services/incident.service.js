@@ -52,3 +52,11 @@ export const updateIncident = async (organisationId, id, data) => {
     data
   });
 };
+
+export const deleteIncident = async (organisationId, id) => {
+  const incident = await prisma.incident.findFirst({ where: { id, organisationId } });
+  if (!incident) throw new AppError("Incident not found", 404, "INCIDENT_NOT_FOUND");
+
+  await prisma.incident.delete({ where: { id } });
+  return incident;
+};

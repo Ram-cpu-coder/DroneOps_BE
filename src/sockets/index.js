@@ -40,3 +40,8 @@ export const publishAlert = (alert) => {
   if (!io) return;
   io.emit("operations:alert", alert);
 };
+
+export const publishActivity = (activity) => {
+  if (!io) return;
+  io.emit("operations:activity", activity);
+};

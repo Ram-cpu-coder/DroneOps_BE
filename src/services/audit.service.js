@@ -1,7 +1,8 @@
 import { prisma } from "../config/prisma.js";
+import { publishActivity } from "../sockets/index.js";
 
 export const writeAudit = async ({ organisationId, actorId, action, entityType, entityId, metadata }) => {
-  return prisma.auditLog.create({
+  const auditLog = await prisma.auditLog.create({
     data: {
       organisationId,
       actorId,
@@ -11,6 +12,18 @@ export const writeAudit = async ({ organisationId, actorId, action, entityType, 
       metadata
     }
   });
+
+  publishActivity({
+    id: auditLog.id,
+    organisationId: auditLog.organisationId,
+    actorId: auditLog.actorId,
+    action: auditLog.action,
+    entityType: auditLog.entityType,
+    entityId: auditLog.entityId,
+    createdAt: auditLog.createdAt
+  });
+
+  return auditLog;
 };
 
 export const listAuditLogs = async (organisationId, filters = {}) => {

@@ -5,6 +5,7 @@ import { prisma } from "../config/prisma.js";
 import { AppError } from "../utils/AppError.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "./email.service.js";
 import { storeUploadedFile } from "./fileStorage.service.js";
+import { writeAudit } from "./audit.service.js";
 import { comparePassword, hashPassword } from "../utils/passwords.js";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/tokens.js";
 
@@ -95,6 +96,19 @@ export const signup = async (payload) => {
     emailStatus = { sent: false, error: error.message };
     console.warn(`[mail] Verification email failed for ${user.email}: ${error.message}`);
   }
+
+  await writeAudit({
+    organisationId: user.organisationId,
+    actorId: user.id,
+    action: "USER_REGISTERED",
+    entityType: "USER",
+    entityId: user.id,
+    metadata: {
+      name: user.name,
+      email: user.email,
+      role: user.role
+    }
+  });
 
   return {
     user,
@@ -188,6 +202,19 @@ export const completeGoogleProfile = async ({ credential, organisationName, role
     }
   });
 
+  await writeAudit({
+    organisationId: user.organisationId,
+    actorId: user.id,
+    action: "USER_REGISTERED_GOOGLE",
+    entityType: "USER",
+    entityId: user.id,
+    metadata: {
+      name: user.name,
+      email: user.email,
+      role: user.role
+    }
+  });
+
   const tokens = await issueTokens(user);
   const safeUser = await prisma.user.findUnique({ where: { id: user.id }, select: publicUserSelect });
   return { user: safeUser, ...tokens };
@@ -197,11 +224,26 @@ export const verifyEmail = async (token) => {
   const user = await prisma.user.findFirst({ where: { verificationToken: token } });
   if (!user) throw new AppError("Invalid verification token", 400, "INVALID_VERIFICATION_TOKEN");
 
-  return prisma.user.update({
+  const verifiedUser = await prisma.user.update({
     where: { id: user.id },
     data: { isVerified: true, verificationToken: null },
     select: publicUserSelect
   });
+
+  await writeAudit({
+    organisationId: verifiedUser.organisationId,
+    actorId: verifiedUser.id,
+    action: "USER_VERIFIED",
+    entityType: "USER",
+    entityId: verifiedUser.id,
+    metadata: {
+      name: verifiedUser.name,
+      email: verifiedUser.email,
+      role: verifiedUser.role
+    }
+  });
+
+  return verifiedUser;
 };
 
 export const requestPasswordReset = async ({ email }) => {
@@ -252,6 +294,19 @@ export const resetPassword = async ({ token, password }) => {
       passwordHash,
       resetToken: null,
       refreshTokenHash: null
+    }
+  });
+
+  await writeAudit({
+    organisationId: user.organisationId,
+    actorId: user.id,
+    action: "PASSWORD_RESET",
+    entityType: "USER",
+    entityId: user.id,
+    metadata: {
+      name: user.name,
+      email: user.email,
+      role: user.role
     }
   });
 

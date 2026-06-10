@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { writeAudit } from "../services/audit.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { created, ok } from "../utils/apiResponse.js";
 
@@ -25,6 +26,17 @@ export const create = asyncHandler(async (req, res) => {
       organisationId: req.user.organisationId,
       generatedById: req.user.id,
       ...req.body
+    }
+  });
+  await writeAudit({
+    organisationId: req.user.organisationId,
+    actorId: req.user.id,
+    action: "REPORT_CREATED",
+    entityType: "REPORT",
+    entityId: report.id,
+    metadata: {
+      title: report.title,
+      type: report.type
     }
   });
   return created(res, report, "Report generated");
@@ -191,6 +203,18 @@ export const generate = asyncHandler(async (req, res) => {
     }
   });
 
+  await writeAudit({
+    organisationId: req.user.organisationId,
+    actorId: req.user.id,
+    action: "REPORT_GENERATED",
+    entityType: "REPORT",
+    entityId: report.id,
+    metadata: {
+      title: report.title,
+      type: report.type
+    }
+  });
+
   return created(res, report, "Report generated from live organisation data");
 });
 
@@ -207,5 +231,16 @@ export const remove = asyncHandler(async (req, res) => {
   }
 
   await prisma.report.delete({ where: { id: report.id } });
+  await writeAudit({
+    organisationId: req.user.organisationId,
+    actorId: req.user.id,
+    action: "REPORT_DELETED",
+    entityType: "REPORT",
+    entityId: report.id,
+    metadata: {
+      title: report.title,
+      type: report.type
+    }
+  });
   return ok(res, { id: report.id }, "Report deleted");
 });

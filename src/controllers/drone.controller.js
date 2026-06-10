@@ -16,7 +16,11 @@ export const create = asyncHandler(async (req, res) => {
     action: "DRONE_CREATED",
     entityType: "DRONE",
     entityId: drone.id,
-    metadata: { droneCode: drone.droneCode }
+    metadata: {
+      droneCode: drone.droneCode,
+      model: drone.model,
+      status: drone.status
+    }
   });
   return created(res, drone, "Drone registered");
 });
@@ -29,19 +33,28 @@ export const update = asyncHandler(async (req, res) => {
     action: "DRONE_UPDATED",
     entityType: "DRONE",
     entityId: drone.id,
-    metadata: { fields: Object.keys(req.body) }
+    metadata: {
+      droneCode: drone.droneCode,
+      model: drone.model,
+      status: drone.status,
+      fields: Object.keys(req.body)
+    }
   });
   return ok(res, drone, "Drone updated");
 });
 
 export const remove = asyncHandler(async (req, res) => {
-  await droneService.deleteDrone(req.user.organisationId, req.params.id);
+  const drone = await droneService.deleteDrone(req.user.organisationId, req.params.id);
   await writeAudit({
     organisationId: req.user.organisationId,
     actorId: req.user.id,
     action: "DRONE_DELETED",
     entityType: "DRONE",
-    entityId: req.params.id
+    entityId: drone.id,
+    metadata: {
+      droneCode: drone.droneCode,
+      model: drone.model
+    }
   });
   return noContent(res);
 });

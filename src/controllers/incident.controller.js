@@ -16,7 +16,12 @@ export const create = asyncHandler(async (req, res) => {
     action: "INCIDENT_CREATED",
     entityType: "INCIDENT",
     entityId: incident.id,
-    metadata: { incidentCode: incident.incidentCode, severity: incident.severity }
+    metadata: {
+      incidentCode: incident.incidentCode,
+      title: incident.title,
+      severity: incident.severity,
+      status: incident.status
+    }
   });
   return created(res, incident, "Incident logged");
 });
@@ -29,7 +34,13 @@ export const update = asyncHandler(async (req, res) => {
     action: "INCIDENT_UPDATED",
     entityType: "INCIDENT",
     entityId: incident.id,
-    metadata: { fields: Object.keys(req.body) }
+    metadata: {
+      incidentCode: incident.incidentCode,
+      title: incident.title,
+      severity: incident.severity,
+      status: incident.status,
+      fields: Object.keys(req.body)
+    }
   });
   return ok(res, incident, "Incident updated");
 });
@@ -42,7 +53,11 @@ export const remove = asyncHandler(async (req, res) => {
     action: "INCIDENT_DELETED",
     entityType: "INCIDENT",
     entityId: incident.id,
-    metadata: { incidentCode: incident.incidentCode }
+    metadata: {
+      incidentCode: incident.incidentCode,
+      title: incident.title,
+      severity: incident.severity
+    }
   });
   return ok(res, { id: incident.id }, "Incident deleted");
 });

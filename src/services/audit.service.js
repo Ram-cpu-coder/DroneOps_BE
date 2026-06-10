@@ -21,8 +21,17 @@ export const listAuditLogs = async (organisationId, filters = {}) => {
       entityId: filters.entityId,
       actorId: filters.actorId
     },
+    include: {
+      actor: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true
+        }
+      }
+    },
     orderBy: { createdAt: "desc" },
     take: Math.min(Number(filters.limit ?? 100), 500)
   });
 };
-

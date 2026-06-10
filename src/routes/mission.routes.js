@@ -10,5 +10,6 @@ missionRouter.use(requireAuth);
 missionRouter.get("/", requirePermission("missions:read"), missionController.list);
 missionRouter.post("/", requirePermission("missions:manage"), validate(missionCreateSchema), missionController.create);
 missionRouter.put("/:id", requirePermission("missions:manage"), validate(idParamSchema), missionController.update);
+missionRouter.post("/:id/approve", requirePermission("*"), validate(idParamSchema), missionController.approve);
 missionRouter.post("/:id/start", requirePermission("missions:manage"), validate(idParamSchema), missionController.start);
 missionRouter.post("/:id/complete", requirePermission("missions:manage"), validate(idParamSchema), missionController.complete);

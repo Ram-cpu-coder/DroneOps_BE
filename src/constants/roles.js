@@ -7,7 +7,8 @@ export const permissions = {
     "geofences:read",
     "incidents:read",
     "reports:read",
-    "documents:read"
+    "documents:read",
+    "audit:read"
   ],
   REMOTE_PILOT: [
     "missions:read",
@@ -18,14 +19,16 @@ export const permissions = {
     "telemetry:read",
     "geofences:read",
     "incidents:create",
-    "documents:read"
+    "documents:read",
+    "audit:read"
   ],
   MAINTENANCE_COORDINATOR: [
     "maintenance:manage",
     "drones:read",
     "defects:manage",
     "documents:read",
-    "reports:read"
+    "reports:read",
+    "audit:read"
   ],
   SAFETY_OFFICER: [
     "incidents:manage",
@@ -35,7 +38,8 @@ export const permissions = {
     "risk:manage",
     "telemetry:read",
     "documents:read",
-    "reports:read"
+    "reports:read",
+    "audit:read"
   ],
   COMPLIANCE_OFFICER: [
     "documents:manage",

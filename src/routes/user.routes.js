@@ -6,3 +6,5 @@ export const userRouter = Router();
 
 userRouter.use(requireAuth);
 userRouter.get("/", requirePermission("*"), userController.list);
+userRouter.put("/:id", requirePermission("*"), userController.update);
+userRouter.delete("/:id", requirePermission("*"), userController.remove);

@@ -9,29 +9,56 @@ export const list = asyncHandler(async (req, res) => {
 });
 
 export const create = asyncHandler(async (req, res) => {
-  const mission = await missionService.createMission(req.user.organisationId, req.validated.body);
+  const mission = await missionService.createMission(req.user.organisationId, req.validated.body, req.user.role);
   await writeAudit({
     organisationId: req.user.organisationId,
     actorId: req.user.id,
-    action: "MISSION_CREATED",
+    action: mission.status === "PLANNED" ? "MISSION_SUBMITTED_FOR_APPROVAL" : "MISSION_CREATED",
     entityType: "MISSION",
     entityId: mission.id,
-    metadata: { missionCode: mission.missionCode }
+    metadata: {
+      missionCode: mission.missionCode,
+      name: mission.name,
+      status: mission.status,
+      requiresApproval: mission.status === "PLANNED"
+    }
   });
-  return created(res, mission, "Mission created");
+  return created(res, mission, mission.status === "PLANNED" ? "Mission submitted for approval" : "Mission created");
 });
 
 export const update = asyncHandler(async (req, res) => {
-  const mission = await missionService.updateMission(req.user.organisationId, req.params.id, req.body);
+  const mission = await missionService.updateMission(req.user.organisationId, req.params.id, req.body, req.user.role);
   await writeAudit({
     organisationId: req.user.organisationId,
     actorId: req.user.id,
     action: "MISSION_UPDATED",
     entityType: "MISSION",
     entityId: mission.id,
-    metadata: { fields: Object.keys(req.body) }
+    metadata: {
+      missionCode: mission.missionCode,
+      name: mission.name,
+      status: mission.status,
+      fields: Object.keys(req.body)
+    }
   });
   return ok(res, mission, "Mission updated");
+});
+
+export const approve = asyncHandler(async (req, res) => {
+  const mission = await missionService.approveMission(req.user.organisationId, req.params.id);
+  await writeAudit({
+    organisationId: req.user.organisationId,
+    actorId: req.user.id,
+    action: "MISSION_APPROVED",
+    entityType: "MISSION",
+    entityId: mission.id,
+    metadata: {
+      missionCode: mission.missionCode,
+      name: mission.name,
+      status: mission.status
+    }
+  });
+  return ok(res, mission, "Mission approved");
 });
 
 export const start = asyncHandler(async (req, res) => {
@@ -41,7 +68,12 @@ export const start = asyncHandler(async (req, res) => {
     actorId: req.user.id,
     action: "MISSION_STARTED",
     entityType: "MISSION",
-    entityId: mission.id
+    entityId: mission.id,
+    metadata: {
+      missionCode: mission.missionCode,
+      name: mission.name,
+      status: mission.status
+    }
   });
   return ok(res, mission, "Mission started");
 });
@@ -53,7 +85,12 @@ export const complete = asyncHandler(async (req, res) => {
     actorId: req.user.id,
     action: "MISSION_COMPLETED",
     entityType: "MISSION",
-    entityId: mission.id
+    entityId: mission.id,
+    metadata: {
+      missionCode: mission.missionCode,
+      name: mission.name,
+      status: mission.status
+    }
   });
   return ok(res, mission, "Mission completed");
 });

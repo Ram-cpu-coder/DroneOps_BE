@@ -60,9 +60,10 @@ const saveLocally = async (file) => {
   const filepath = path.join(uploadRoot, filename);
 
   await fs.writeFile(filepath, file.buffer);
+  const publicBaseUrl = env.apiPublicUrl.replace(/\/api\/v\d+\/?$/, "");
 
   return {
-    fileUrl: `/uploads/${filename}`,
+    fileUrl: `${publicBaseUrl}/uploads/${filename}`,
     storageProvider: "local",
     publicId: filename,
     resourceType: file.mimetype,

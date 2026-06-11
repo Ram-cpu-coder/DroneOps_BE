@@ -65,6 +65,41 @@ export const verifyEmail = asyncHandler(async (req, res, next) => {
   }
 });
 
+export const verifyEmailChange = asyncHandler(async (req, res, next) => {
+  const wantsJson = req.query.format === "json";
+
+  try {
+    const user = await authService.verifyEmailChange(req.params.token);
+
+    if (wantsJson) {
+      return ok(res, user, "Email changed");
+    }
+
+    return res
+      .status(200)
+      .type("html")
+      .send(renderVerificationPage({
+        status: "success",
+        title: "Email changed",
+        message: "Your DroneOps account email has been updated. Please sign in again with the new email address.",
+        user,
+        loginUrl: env.clientPublicUrl
+      }));
+  } catch (error) {
+    if (wantsJson) return next(error);
+
+    return res
+      .status(error.statusCode ?? 400)
+      .type("html")
+      .send(renderVerificationPage({
+        status: "error",
+        title: "Email change failed",
+        message: error.message || "This email change link can no longer be used.",
+        loginUrl: env.clientPublicUrl
+      }));
+  }
+});
+
 export const requestPasswordReset = asyncHandler(async (req, res) => {
   const result = await authService.requestPasswordReset(req.validated.body);
   return ok(res, result, "If the account exists, a password reset link has been sent.");

@@ -23,6 +23,7 @@ authRouter.post("/google/complete-profile", authRateLimiter, validate(googleComp
 authRouter.post("/profile-image", uploadRateLimiter, uploadSingleImage, authController.uploadProfileImage);
 authRouter.post("/refresh-token", validate(refreshTokenSchema), authController.refreshToken);
 authRouter.get("/verify/:token", authController.verifyEmail);
+authRouter.get("/verify-email-change/:token", authController.verifyEmailChange);
 authRouter.post("/forgot-password", authRateLimiter, validate(passwordResetRequestSchema), authController.requestPasswordReset);
 authRouter.get("/reset-password/:token", authController.showPasswordReset);
 authRouter.post("/reset-password/:token", authRateLimiter, validate(passwordResetSchema), authController.resetPassword);

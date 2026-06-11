@@ -2,6 +2,12 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+["HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"].forEach((key) => {
+  if (process.env[key] === "http://127.0.0.1:9") {
+    delete process.env[key];
+  }
+});
+
 const requiredInProduction = ["DATABASE_URL", "JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET"];
 
 if (process.env.NODE_ENV === "production") {

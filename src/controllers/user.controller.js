@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { noContent, ok } from "../utils/apiResponse.js";
 import { AppError } from "../utils/AppError.js";
 import { writeAudit } from "../services/audit.service.js";
+import * as userService from "../services/user.service.js";
 
 const allowedRoles = new Set([
   "OPERATIONS_MANAGER",
@@ -13,24 +14,6 @@ const allowedRoles = new Set([
   "SYSTEM_ADMINISTRATOR"
 ]);
 
-const userSelect = {
-  id: true,
-  organisation: {
-    select: {
-      id: true,
-      name: true
-    }
-  },
-  name: true,
-  email: true,
-  role: true,
-  profileImageUrl: true,
-  isVerified: true,
-  createdAt: true,
-  updatedAt: true,
-  lastLoginAt: true
-};
-
 export const list = asyncHandler(async (req, res) => {
   const users = await prisma.user.findMany({
     // Keep user directories tenant-scoped so one organisation never sees another
@@ -38,10 +21,26 @@ export const list = asyncHandler(async (req, res) => {
     where: {
       organisationId: req.user.organisationId
     },
-    select: userSelect,
+    select: userService.userSelect,
     orderBy: { createdAt: "desc" }
   });
   return ok(res, users);
+});
+
+export const updateMe = asyncHandler(async (req, res) => {
+  const result = await userService.updateOwnProfile({
+    actor: req.user,
+    payload: req.body
+  });
+
+  return ok(
+    res,
+    {
+      ...result.user,
+      emailChangePending: result.emailChangePending
+    },
+    result.emailChangePending ? "Email change verification sent to current email" : "Profile updated"
+  );
 });
 
 export const update = asyncHandler(async (req, res) => {
@@ -76,7 +75,7 @@ export const update = asyncHandler(async (req, res) => {
     const user = await prisma.user.update({
       where: { id: existingUser.id },
       data,
-      select: userSelect
+      select: userService.userSelect
     });
 
     await writeAudit({
@@ -119,7 +118,7 @@ export const remove = asyncHandler(async (req, res) => {
 
     const user = await prisma.user.delete({
       where: { id: existingUser.id },
-      select: userSelect
+      select: userService.userSelect
     });
 
     await writeAudit({

@@ -216,6 +216,87 @@ export const sendPasswordResetEmail = async ({ user, resetToken }) => {
   });
 };
 
+export const sendEmailChangeVerificationEmail = async ({ user, pendingEmail, emailChangeToken }) => {
+  const changeUrl = `${env.apiPublicUrl}/auth/verify-email-change/${emailChangeToken}`;
+  const safeName = escapeHtml(user.name);
+  const safeCurrentEmail = escapeHtml(user.email);
+  const safePendingEmail = escapeHtml(pendingEmail);
+  const safeUrl = escapeHtml(changeUrl);
+
+  return sendMail({
+    to: user.email,
+    subject: "Confirm your DroneOps email change",
+    text: [
+      `Hi ${user.name},`,
+      "",
+      `We received a request to change your DroneOps email from ${user.email} to ${pendingEmail}.`,
+      "Confirm this change from your current email address:",
+      changeUrl,
+      "",
+      "If you did not request this change, ignore this email and keep using your current account."
+    ].join("\n"),
+    html: `
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width,initial-scale=1" />
+          <title>Confirm your DroneOps email change</title>
+        </head>
+        <body style="margin:0;padding:0;background:#08111f;font-family:Arial,Helvetica,sans-serif;color:#f8fbff;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#08111f;padding:32px 14px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;border-collapse:separate;border-spacing:0;background:#0e1828;border:1px solid #22314a;border-radius:26px;overflow:hidden;box-shadow:0 28px 70px rgba(0,0,0,.35);">
+                  <tr>
+                    <td style="padding:34px 32px 26px;background:linear-gradient(135deg,#101c30 0%,#0b1423 58%,#132642 100%);">
+                      <div style="font-size:38px;line-height:1;font-weight:800;color:#ffffff;">DRONE <span style="color:#5a95ff;">OPS</span></div>
+                      <div style="padding-top:10px;color:#9eb0c8;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">Secure account change</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:34px 32px 10px;">
+                      <div style="display:inline-block;padding:8px 12px;border:1px solid #2e65c5;border-radius:999px;background:#122a52;color:#8fb8ff;font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;">Email change verification</div>
+                      <h1 style="margin:18px 0 12px;color:#ffffff;font-size:32px;line-height:1.12;font-weight:800;">Confirm this email change</h1>
+                      <p style="margin:0;color:#c4cfdd;font-size:16px;line-height:1.65;">
+                        Hi ${safeName}, confirm from your current verified email before DroneOps switches your account address.
+                      </p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:18px 32px;">
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #22314a;border-radius:18px;background:#111d30;">
+                        <tr>
+                          <td style="padding:18px 20px;color:#c4cfdd;font-size:14px;line-height:1.65;">
+                            <strong style="color:#ffffff;">Current email</strong><br />${safeCurrentEmail}<br /><br />
+                            <strong style="color:#ffffff;">New email</strong><br />${safePendingEmail}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td align="center" style="padding:20px 32px 34px;">
+                      <a href="${safeUrl}" style="display:block;width:100%;max-width:360px;min-height:54px;line-height:54px;background:linear-gradient(135deg,#5a95ff,#2672ea);border-radius:12px;color:#ffffff;text-decoration:none;font-size:17px;font-weight:800;text-align:center;">
+                        Confirm email change
+                      </a>
+                      <p style="margin:22px 0 0;color:#8fa0b8;font-size:13px;line-height:1.55;">If the button does not work, paste this URL into your browser:</p>
+                      <p style="margin:8px 0 0;color:#9eb0c8;font-size:12px;line-height:1.6;word-break:break-all;">${safeUrl}</p>
+                    </td>
+                  </tr>
+                </table>
+                <p style="max-width:640px;margin:18px auto 0;color:#74849c;font-size:12px;line-height:1.5;text-align:center;">
+                  If you did not request this email change, no action is needed.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `
+  });
+};
+
 const escapeHtml = (value = "") => {
   return value
     .replaceAll("&", "&amp;")

@@ -144,6 +144,19 @@ model Organisation {
   documents   Document[]
   reports     Report[]
   auditLogs   AuditLog[]
+  alertSettings AlertSettings?
+}
+
+model AlertSettings {
+  id                    String   @id @default(uuid())
+  organisationId        String   @unique
+  minimumLandingBattery Int      @default(20)
+  maximumWindSpeed      Int      @default(34)
+  lowSignalWarning      Int      @default(70)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
 }
 
 model User {
@@ -156,6 +169,8 @@ model User {
   profileImageUrl  String?
   isVerified       Boolean   @default(false)
   verificationToken String?
+  pendingEmail      String?
+  emailChangeToken  String?
   resetToken       String?
   refreshTokenHash String?
   lastLoginAt      DateTime?

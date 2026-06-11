@@ -1,5 +1,5 @@
-import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
+import { getTelemetryAlertThresholds } from "./alertSettings.service.js";
 import { publishAlert, publishTelemetry } from "../sockets/index.js";
 import { AppError } from "../utils/AppError.js";
 import { isPointInPolygon } from "../utils/geo.js";
@@ -140,26 +140,29 @@ export const getMissionReplay = async (organisationId, missionId) => {
 
 const evaluateTelemetryAlerts = async (organisationId, drone, record) => {
   const alerts = [];
+  const thresholds = await getTelemetryAlertThresholds(organisationId);
 
-  if (record.batteryLevel < env.lowBatteryThreshold) {
+  if (record.batteryLevel < thresholds.minimumLandingBattery) {
     alerts.push({
       type: "LOW_BATTERY",
       severity: "HIGH",
       droneId: drone.id,
-      message: `${drone.droneCode} battery below ${env.lowBatteryThreshold}%`,
+      message: `${drone.droneCode} battery below ${thresholds.minimumLandingBattery}%`,
       timestamp: record.timestamp
     });
   }
 
-  if (record.signalStrength <= 5 || record.linkQuality.toUpperCase() === "LOST") {
+  if (record.signalStrength < thresholds.lowSignalWarning || record.linkQuality.toUpperCase() === "LOST") {
     alerts.push({
       type: "SIGNAL_LOSS",
-      severity: "CRITICAL",
+      severity: record.signalStrength <= 5 || record.linkQuality.toUpperCase() === "LOST" ? "CRITICAL" : "MEDIUM",
       droneId: drone.id,
-      message: `${drone.droneCode} signal loss detected`,
+      message: `${drone.droneCode} signal below ${thresholds.lowSignalWarning}%`,
       timestamp: record.timestamp
     });
-    await prisma.drone.update({ where: { id: drone.id }, data: { status: "DISCONNECTED" } });
+    if (record.signalStrength <= 5 || record.linkQuality.toUpperCase() === "LOST") {
+      await prisma.drone.update({ where: { id: drone.id }, data: { status: "DISCONNECTED" } });
+    }
   }
 
   const geofences = await prisma.geofence.findMany({

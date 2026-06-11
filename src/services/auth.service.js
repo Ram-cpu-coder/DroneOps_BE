@@ -8,6 +8,7 @@ import { storeUploadedFile } from "./fileStorage.service.js";
 import { writeAudit } from "./audit.service.js";
 import { comparePassword, hashPassword } from "../utils/passwords.js";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/tokens.js";
+import { hashOneTimeToken } from "../utils/oneTimeTokens.js";
 
 const publicUserSelect = {
   id: true,
@@ -33,8 +34,6 @@ const issueTokens = async (user) => {
   return { accessToken, refreshToken };
 };
 
-const hashOneTimeToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
-
 const googleClient = env.googleClientId ? new OAuth2Client(env.googleClientId) : null;
 
 const verifyGoogleCredential = async (credential) => {
@@ -48,7 +47,8 @@ const verifyGoogleCredential = async (credential) => {
       idToken: credential,
       audience: env.googleClientId
     });
-  } catch {
+  } catch (error) {
+    console.warn(`[auth] Google token verification failed: ${error.message}`);
     throw new AppError("Google sign-in token could not be verified", 401, "INVALID_GOOGLE_TOKEN");
   }
 
@@ -244,6 +244,56 @@ export const verifyEmail = async (token) => {
   });
 
   return verifiedUser;
+};
+
+export const verifyEmailChange = async (token) => {
+  const emailChangeToken = hashOneTimeToken(token);
+  const user = await prisma.user.findFirst({
+    where: { emailChangeToken },
+    select: {
+      ...publicUserSelect,
+      pendingEmail: true
+    }
+  });
+
+  if (!user?.pendingEmail) throw new AppError("Invalid email change token", 400, "INVALID_EMAIL_CHANGE_TOKEN");
+
+  const existingEmail = await prisma.user.findUnique({
+    where: { email: user.pendingEmail },
+    select: { id: true }
+  });
+  if (existingEmail && existingEmail.id !== user.id) {
+    throw new AppError("Email is already used by another account", 409, "EMAIL_EXISTS");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      email: user.pendingEmail,
+      pendingEmail: null,
+      emailChangeToken: null,
+      isVerified: true,
+      // Existing refresh tokens are invalidated so future sessions must use the new email identity.
+      refreshTokenHash: null
+    },
+    select: publicUserSelect
+  });
+
+  await writeAudit({
+    organisationId: updatedUser.organisationId,
+    actorId: updatedUser.id,
+    action: "USER_EMAIL_CHANGED",
+    entityType: "USER",
+    entityId: updatedUser.id,
+    metadata: {
+      name: updatedUser.name,
+      previousEmail: user.email,
+      email: updatedUser.email,
+      role: updatedUser.role
+    }
+  });
+
+  return updatedUser;
 };
 
 export const requestPasswordReset = async ({ email }) => {

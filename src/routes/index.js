@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { auditRouter } from "./audit.routes.js";
 import { authRouter } from "./auth.routes.js";
+import { dashboardRouter } from "./dashboard.routes.js";
 import { documentRouter } from "./document.routes.js";
 import { droneRouter } from "./drone.routes.js";
 import { geofenceRouter } from "./geofence.routes.js";
@@ -19,6 +20,7 @@ export const apiRouter = Router();
 
 apiRouter.use("/health", healthRouter);
 apiRouter.use("/auth", authRouter);
+apiRouter.use("/dashboard", dashboardRouter);
 apiRouter.use("/drones", droneRouter);
 apiRouter.use("/missions", missionRouter);
 apiRouter.get("/missions/:id/replay", requireAuth, requirePermission("telemetry:read"), telemetryController.replay);

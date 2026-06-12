@@ -35,6 +35,7 @@ const issueTokens = async (user) => {
 };
 
 const googleClient = env.googleClientId ? new OAuth2Client(env.googleClientId) : null;
+const PASSWORD_RESET_COOLDOWN_MS = 2 * 60 * 1000;
 
 const verifyGoogleCredential = async (credential) => {
   if (!googleClient || !env.googleClientId) {
@@ -161,13 +162,15 @@ export const loginWithGoogle = async ({ credential }) => {
     };
   }
 
+  if (!existingUser.isVerified) {
+    throw new AppError("Email verification required", 403, "EMAIL_NOT_VERIFIED");
+  }
+
   const user = await prisma.user.update({
     where: { id: existingUser.id },
     data: {
       name: profile.name ?? profile.email,
-      profileImageUrl: profile.picture,
-      isVerified: true,
-      verificationToken: null
+      profileImageUrl: profile.picture
     }
   });
 
@@ -181,6 +184,10 @@ export const completeGoogleProfile = async ({ credential, organisationName, role
   const existingUser = await prisma.user.findUnique({ where: { email: profile.email } });
 
   if (existingUser) {
+    if (!existingUser.isVerified) {
+      throw new AppError("Email verification required", 403, "EMAIL_NOT_VERIFIED");
+    }
+
     const tokens = await issueTokens(existingUser);
     const safeUser = await prisma.user.findUnique({ where: { id: existingUser.id }, select: publicUserSelect });
     return { user: safeUser, ...tokens };
@@ -297,10 +304,33 @@ export const verifyEmailChange = async (token) => {
 };
 
 export const requestPasswordReset = async ({ email }) => {
-  const user = await prisma.user.findUnique({ where: { email }, select: publicUserSelect });
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      ...publicUserSelect,
+      passwordResetRequestedAt: true
+    }
+  });
 
   if (!user) {
-    return { emailSent: true };
+    throw new AppError("No DroneOps account found for this email", 404, "ACCOUNT_NOT_FOUND");
+  }
+
+  if (!user.isVerified) {
+    throw new AppError("Verify your email before resetting password", 403, "EMAIL_NOT_VERIFIED");
+  }
+
+  if (user.passwordResetRequestedAt) {
+    const elapsedMs = Date.now() - user.passwordResetRequestedAt.getTime();
+    if (elapsedMs < PASSWORD_RESET_COOLDOWN_MS) {
+      const retryAfterSeconds = Math.ceil((PASSWORD_RESET_COOLDOWN_MS - elapsedMs) / 1000);
+      throw new AppError(
+        `Please wait ${retryAfterSeconds} seconds before requesting another password reset email.`,
+        429,
+        "PASSWORD_RESET_COOLDOWN",
+        { retryAfterSeconds }
+      );
+    }
   }
 
   const resetToken = crypto.randomBytes(32).toString("hex");
@@ -308,7 +338,10 @@ export const requestPasswordReset = async ({ email }) => {
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { resetToken: resetTokenHash }
+    data: {
+      resetToken: resetTokenHash,
+      passwordResetRequestedAt: new Date()
+    }
   });
 
   let emailStatus = { sent: false };
@@ -322,6 +355,7 @@ export const requestPasswordReset = async ({ email }) => {
   return {
     emailSent: emailStatus.sent,
     emailError: emailStatus.error,
+    cooldownSeconds: 120,
     devResetToken: !emailStatus.sent && process.env.NODE_ENV !== "production" ? resetToken : undefined
   };
 };
@@ -343,6 +377,7 @@ export const resetPassword = async ({ token, password }) => {
     data: {
       passwordHash,
       resetToken: null,
+      passwordResetRequestedAt: null,
       refreshTokenHash: null
     }
   });

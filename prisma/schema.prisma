@@ -172,6 +172,7 @@ model User {
   pendingEmail      String?
   emailChangeToken  String?
   resetToken       String?
+  passwordResetRequestedAt DateTime?
   refreshTokenHash String?
   lastLoginAt      DateTime?
   createdAt        DateTime  @default(now())
@@ -454,4 +455,5 @@ model AuditLog {
   actor User? @relation(fields: [actorId], references: [id])
 
   @@index([organisationId, entityType, entityId])
+  @@index([organisationId, createdAt])
 }

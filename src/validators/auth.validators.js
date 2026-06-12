@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const optionalUrl = z.preprocess((value) => value === "" || value === null ? undefined : value, z.string().url().optional());
+
 const passwordSchema = z.string()
   .min(8, "Password must be at least 8 characters")
   .regex(/[A-Z]/, "Password must include one uppercase letter")
@@ -14,7 +16,7 @@ export const signupSchema = z.object({
     password: passwordSchema,
     organisationName: z.string().min(2),
     industry: z.string().optional(),
-    profileImageUrl: z.string().url().optional(),
+    profileImageUrl: optionalUrl,
     role: z.enum([
       "OPERATIONS_MANAGER",
       "REMOTE_PILOT",
@@ -53,8 +55,7 @@ export const googleCompleteProfileSchema = z.object({
       "REMOTE_PILOT",
       "MAINTENANCE_COORDINATOR",
       "SAFETY_OFFICER",
-      "COMPLIANCE_OFFICER",
-      "SYSTEM_ADMINISTRATOR"
+      "COMPLIANCE_OFFICER"
     ]).default("OPERATIONS_MANAGER")
   }),
   params: z.object({}).optional(),

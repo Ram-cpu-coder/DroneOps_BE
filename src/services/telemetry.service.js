@@ -1,5 +1,6 @@
 import { prisma } from "../config/prisma.js";
 import { getTelemetryAlertThresholds } from "./alertSettings.service.js";
+import { syncMissionProgressFromTelemetry } from "./missionProgress.service.js";
 import { publishAlert, publishTelemetry } from "../sockets/index.js";
 import { AppError } from "../utils/AppError.js";
 import { isPointInPolygon } from "../utils/geo.js";
@@ -67,7 +68,10 @@ export const ingestTelemetry = async (organisationId, payload) => {
     }
   });
 
-  const alerts = await evaluateTelemetryAlerts(organisationId, drone, record);
+  const [alerts, missionProgress] = await Promise.all([
+    evaluateTelemetryAlerts(organisationId, drone, record),
+    syncMissionProgressFromTelemetry(mission, record)
+  ]);
   const apiTelemetry = toApiTelemetry(record);
   publishTelemetry(apiTelemetry);
   alerts.forEach(publishAlert);
@@ -81,7 +85,7 @@ export const ingestTelemetry = async (organisationId, payload) => {
     }
   });
 
-  return { telemetry: apiTelemetry, alerts };
+  return { telemetry: apiTelemetry, alerts, missionProgress };
 };
 
 export const getLatestTelemetry = async (organisationId) => {

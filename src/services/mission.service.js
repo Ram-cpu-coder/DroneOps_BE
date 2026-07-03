@@ -91,7 +91,7 @@ export const startMission = async (organisationId, id) => {
   return prisma.$transaction(async (tx) => {
     const updatedMission = await tx.mission.update({
       where: { id },
-      data: { status: "ACTIVE", progress: mission.progress > 0 ? mission.progress : 15 }
+      data: { status: "ACTIVE", progress: mission.progress }
     });
 
     if (mission.droneId) {
